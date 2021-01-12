@@ -1,0 +1,107 @@
+---
+title: "Mapa de índice de vegetación (NDVI) en la Gran Área Metropolitana"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+#-------------------- Paquetes --------------------
+
+library(flexdashboard)
+library(dplyr)
+library(sf)
+library(leaflet)
+library(leafem)
+library(esri2sf)
+library(raster)
+
+#--------------- URL de geoservicios --------------
+
+url_agfs_limite_gam <-
+  "https://services9.arcgis.com/RrvMEynxDB8hycVO/arcgis/rest/services/gam_limite_gam/FeatureServer/0"
+
+url_raster_ndvi <-
+  "https://raw.githubusercontent.com/atlas-servicios-ecosistemicos-gam/datos-calentamiento-urbano/master/gam/NDVI_GAM_WEB.TIF"
+
+#--------------- Objetos sf y raster ---------------
+
+# Límite de la GAM
+sf_limite_gam <-
+  esri2sf(url_agfs_limite_gam)
+
+# Límite de la GAM (reproyectado a Web Mercator)
+sf_limite_gam_web <- 
+  sf_limite_gam %>%
+  st_transform(3857)
+
+# Capa raster de NDVI (en Web Mercator)
+raster_ndvi <-
+  raster(url_raster_ndvi) %>%
+  crop(sf_limite_gam_web) %>%
+  mask(sf_limite_gam_web)
+
+#---------------- Paletas de colores ---------------
+
+# NDVI
+colores_ndvi <- "Greens"
+pal_ndvi <- 
+  colorNumeric(
+    colores_ndvi, 
+    values(raster_ndvi),
+    na.color = "transparent"
+  )
+
+```
+
+Row
+-----------------------------------------------------------------------
+
+### 
+
+```{r}
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.DarkMatter, group = "CartoDB Dark Matter") %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik, group = "OpenStreetMap") %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "Stamen Toner Lite") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Imágenes de ESRI") %>%
+  addPolygons(
+    data = sf_limite_gam,
+    color = "Purple",
+    fillColor = "transparent",
+    stroke = TRUE,
+    weight = 6.0,
+    group = "Límite de la GAM"
+  ) %>%
+  addRasterImage(
+    raster_ndvi, 
+    colors = pal_ndvi,
+    opacity = 0.9,
+    group = "NDVI"
+  ) %>%  
+  addLegend(
+    title = "NDVI",
+    values = values(raster_ndvi),
+    pal = pal_ndvi,
+    position = "bottomright",
+    group = "NDVI"
+  ) %>%    
+  addLayersControl(
+    baseGroups = c("CartoDB Dark Matter", "OpenStreetMap", "Stamen Toner Lite", "Imágenes de ESRI"),
+    overlayGroups = c("Límite de la GAM", "NDVI"),
+    options = layersControlOptions(collapsed = TRUE)    
+  ) %>%  
+  addMiniMap(
+    toggleDisplay = TRUE,
+    position = "bottomleft",
+    tiles = providers$CartoDB.DarkMatter
+  ) %>%
+  addScaleBar(
+    position = "bottomleft",
+    options = scaleBarOptions(imperial = FALSE)
+  ) %>%
+  addMouseCoordinates()
+
+```
