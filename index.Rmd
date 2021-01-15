@@ -1,5 +1,5 @@
 ---
-title: "Mapa de índice de vegetación (NDVI) en la Gran Área Metropolitana"
+title: "Mapa de índice de vegetación (NDVI) de la Gran Área Metropolitana"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
