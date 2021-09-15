@@ -1,5 +1,5 @@
 ---
-title: "Mapa de índice de vegetación (NDVI) de la Gran Área Metropolitana"
+title: "Mapa del índice de diferencia normalizada de vegetación (NDVI) de la Gran Área Metropolitana"
 output: 
   flexdashboard::flex_dashboard:
     orientation: rows
@@ -44,6 +44,11 @@ raster_ndvi <-
   crop(sf_limite_gam_web) %>%
   mask(sf_limite_gam_web)
 
+raster_ndvi[raster_ndvi==65535] <- NA
+min_raster_ndvi <- format(cellStats(raster_ndvi, stat='min'), digits=2, nsmall=1)
+max_raster_ndvi <- format(cellStats(raster_ndvi, stat='max'), digits=2, nsmall=1)
+mean_raster_ndvi <- format(cellStats(raster_ndvi, stat='mean'), digits=2, nsmall=1)
+
 #---------------- Paletas de colores ---------------
 
 # NDVI
@@ -57,7 +62,7 @@ pal_ndvi <-
 
 ```
 
-Row
+Row {data-height=800}
 -----------------------------------------------------------------------
 
 ### 
@@ -109,4 +114,31 @@ leaflet() %>%
   addSearchOSM() %>%
   addResetMapButton() %>%
   addOpacitySlider(layerId = "raster")
+```
+
+Row {data-height=200}
+-----------------------------------------------------------------------
+
+### NDVI mínimo {.value-box} {data-width=333}
+```{r}
+valueBox(
+  value = "NDVI mínimo", 
+  caption = paste("<h2><strong>", min_raster_ndvi,  "</strong></h2>")
+)
+```
+
+### NDVI máximo {.value-box} {data-width=333}
+```{r}
+valueBox(
+  value = "NDVI máximo", 
+  caption = paste("<h2><strong>", max_raster_ndvi,  "</strong></h2>")
+)
+```
+
+### NDVI promedio {.value-box} {data-width=333}
+```{r}
+valueBox(
+  value = "NDVI promedio", 
+  caption = paste("<h2><strong>", mean_raster_ndvi,  "</strong></h2>")
+)
 ```
